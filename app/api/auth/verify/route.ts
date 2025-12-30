@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
           error: "密码错误",
           remainingAttempts: attemptsUntilLockout,
           totalAttempts: record.totalAttempts,
-          message: `密码错误，还剩 ${attemptsUntilLockout} 次尝试机会`
+          message: "密码错误"
         },
         { status: 401 }
       );

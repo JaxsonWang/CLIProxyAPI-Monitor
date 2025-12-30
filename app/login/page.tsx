@@ -11,6 +11,8 @@ function LoginPageContent() {
   const [lockoutUntil, setLockoutUntil] = useState(0);
   const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null);
   const [totalAttempts, setTotalAttempts] = useState(0);
+  // 用于触发每秒重渲染
+  const [, setTick] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "/";
@@ -31,6 +33,8 @@ function LoginPageContent() {
         setLoading(false);
         setError("");
       }
+      // 强制重渲染以更新倒计时显示
+      setTick(t => t + 1);
     }, 1000);
 
     return () => clearInterval(timer);
@@ -100,7 +104,7 @@ function LoginPageContent() {
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
               <LockKeyhole className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-slate-100">CLIProxy Dashboard</h1>
+            <h1 className="text-2xl font-bold text-slate-100">CLIProxyAPI Dashboard</h1>
             <p className="text-slate-400 mt-2">请输入密码以继续</p>
           </div>
 
@@ -122,23 +126,13 @@ function LoginPageContent() {
               />
             </div>
 
-            {error && (
+            {error && !isLocked && (
               <div className={`rounded-lg p-3 text-sm ${
                 isLocked
                   ? "bg-red-500/10 border border-red-500/50 text-red-400"
                   : "bg-orange-500/10 border border-orange-500/50 text-orange-400"
               }`}>
                 <p className="font-medium">{error}</p>
-                {remainingAttempts !== null && remainingAttempts > 0 && !isLocked && (
-                  <p className="text-xs mt-1.5 opacity-80">
-                    还剩 <span className="font-semibold">{remainingAttempts}</span> 次尝试机会
-                  </p>
-                )}
-                {totalAttempts > 0 && !isLocked && (
-                  <p className="text-xs mt-1 opacity-70">
-                    累计错误 {totalAttempts} 次
-                  </p>
-                )}
               </div>
             )}
 
