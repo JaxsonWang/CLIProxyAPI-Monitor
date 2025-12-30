@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { BarChart3, FileText, Activity, LogOut, Github } from "lucide-react";
+import { BarChart3, FileText, Activity, LogOut, Github, ExternalLink } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 
 const links = [
@@ -18,6 +18,7 @@ export default function Sidebar() {
   const [usageStatsLoading, setUsageStatsLoading] = useState(false);
   const [showUsageConfirm, setShowUsageConfirm] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [cpamcLink, setCpamcLink] = useState<string | null>(null);
 
   const loadToggle = useCallback(async () => {
     setUsageStatsLoading(true);
@@ -36,6 +37,27 @@ export default function Sidebar() {
   useEffect(() => {
     loadToggle();
   }, [loadToggle]);
+
+  useEffect(() => {
+    let active = true;
+    const loadCpamc = async () => {
+      try {
+        const res = await fetch("/api/management-url", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!active) return;
+        setCpamcLink(typeof data?.url === "string" ? data.url : null);
+      } catch {
+        if (!active) return;
+        setCpamcLink(null);
+      }
+    };
+
+    loadCpamc();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const applyUsageToggle = async (nextEnabled: boolean) => {
     setUsageStatsLoading(true);
@@ -100,6 +122,17 @@ export default function Sidebar() {
             </Link>
           );
         })}
+        {cpamcLink ? (
+          <a
+            href={cpamcLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium transition-colors text-slate-400 hover:bg-slate-800 hover:text-white"
+          >
+            <ExternalLink className="h-5 w-5" />
+            前往 CPAMC
+          </a>
+        ) : null}
       </nav>
 
       <div className="mt-auto border-t border-slate-800 px-4 pt-4 pb-2 space-y-3">
