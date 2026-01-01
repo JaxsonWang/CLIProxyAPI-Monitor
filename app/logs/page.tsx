@@ -55,12 +55,23 @@ export default function LogsPage() {
   const [errorLogLoading, setErrorLogLoading] = useState(false);
   const [errorLogError, setErrorLogError] = useState<string | null>(null);
   const [errorLogContentLoading, setErrorLogContentLoading] = useState(false);
-  const [hideManagement, setHideManagement] = useState(false);
+  const [hideManagement, setHideManagement] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const saved = window.localStorage.getItem("hideManagement");
+    return saved === "true";
+  });
 
   // 按时间倒序排序的 errorLogs
   const sortedErrorLogs = useMemo(() => {
     return [...errorLogs].sort((a, b) => (b.modified ?? 0) - (a.modified ?? 0));
   }, [errorLogs]);
+
+  // 保存 hideManagement 状态到 localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("hideManagement", String(hideManagement));
+    }
+  }, [hideManagement]);
 
   const latestText = useMemo(() => {
     if (!latestTs) return "无";
@@ -172,9 +183,29 @@ export default function LogsPage() {
     }
   }, []);
 
-  // 初始加载
+  // 初始加载：默认加载最近 1h 的日志
   useEffect(() => {
-    fetchLogs("full");
+    const timestamp = String(Math.floor(Date.now() / 1000 - 3600)); // 1 小时前
+    setAfterInput(timestamp);
+    setLoading(true);
+    setError(null);
+    fetch(`/api/logs?after=${timestamp}`, { cache: "no-store" })
+      .then(res => res.json())
+      .then(data => {
+        if (data.error) {
+          if (data.error === "logging to file disabled") {
+            setError("文件日志未开启，请在 CLIProxy 配置中启用 logging-to-file");
+          } else {
+            setError(data.error);
+          }
+          setLines([]);
+        } else {
+          setLines(data.lines ?? []);
+          setLatestTs(typeof data["latest-timestamp"] === "number" ? data["latest-timestamp"] : null);
+        }
+      })
+      .catch(err => setError(err.message || "加载失败"))
+      .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -239,24 +270,67 @@ export default function LogsPage() {
         <span>最新记录: {latestText}</span>
         <span className="text-slate-400">|</span>
         <div className="flex items-center gap-2">
-          {[1, 6, 24].map((hours) => (
-            <button
-              key={hours}
-              onClick={() => setAfterInput(String(Math.floor(Date.now() / 1000 - hours * 3600)))}
-              className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 font-semibold hover:border-slate-500"
-            >
-              最近 {hours}h
-            </button>
-          ))}
+          {[1, 6, 24].map((hours) => {
+            // 计算当前按钮对应的时间戳
+            const buttonTimestamp = String(Math.floor(Date.now() / 1000 - hours * 3600));
+            // 检查是否接近当前选择的时间（允许 60 秒误差）
+            const isActive = afterInput && Math.abs(parseInt(afterInput, 10) - parseInt(buttonTimestamp, 10)) < 60;
+            
+            return (
+              <button
+                key={hours}
+                onClick={() => {
+                  const timestamp = String(Math.floor(Date.now() / 1000 - hours * 3600));
+                  setAfterInput(timestamp);
+                  // 自动加载日志
+                  setLoading(true);
+                  setError(null);
+                  fetch(`/api/logs?after=${timestamp}`, { cache: "no-store" })
+                    .then(res => res.json())
+                    .then(data => {
+                      if (data.error) {
+                        if (data.error === "logging to file disabled") {
+                          setError("文件日志未开启，请在 CLIProxy 配置中启用 logging-to-file");
+                        } else {
+                          setError(data.error);
+                        }
+                        setLines([]);
+                      } else {
+                        setLines(data.lines ?? []);
+                        setLatestTs(typeof data["latest-timestamp"] === "number" ? data["latest-timestamp"] : null);
+                      }
+                    })
+                    .catch(err => setError(err.message || "加载失败"))
+                    .finally(() => setLoading(false));
+                }}
+                className={`rounded-lg border px-3 py-1.5 font-semibold transition ${
+                  isActive
+                    ? 'border-blue-500 bg-blue-600 text-white'
+                    : 'border-slate-700 bg-slate-800 hover:border-slate-500'
+                }`}
+              >
+                最近 {hours}h
+              </button>
+            );
+          })}
         </div>
         <span className="text-slate-400">|</span>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={hideManagement}
-            onChange={(e) => setHideManagement(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-slate-900"
-          />
+        <label className="flex cursor-pointer items-center gap-2">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={hideManagement}
+            onClick={() => setHideManagement(!hideManagement)}
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
+              hideManagement ? 'bg-blue-500' : 'bg-slate-600'
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${
+                hideManagement ? 'translate-x-4' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
           <span>隐藏 /v0/management</span>
         </label>
       </div>
@@ -295,14 +369,14 @@ export default function LogsPage() {
           ) : (
             <div className="mt-3 max-h-96 overflow-y-auto divide-y divide-slate-700">
               {sortedErrorLogs.map((file) => (
-                <div key={file.name} className="flex items-center justify-between py-2">
-                  <div>
-                    <p className="text-base font-semibold text-white">{file.name}</p>
+                <div key={file.name} className="flex items-start gap-3 py-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-base font-semibold text-white break-words">{file.name}</p>
                     <p className="text-sm text-slate-400">{formatSize(file.size)} • {formatTimestamp(file.modified)}</p>
                   </div>
                   <button
                     onClick={() => fetchErrorLogFile(file.name)}
-                    className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-semibold hover:border-slate-500"
+                    className="shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm font-semibold hover:border-slate-500"
                   >
                     查看
                   </button>
@@ -313,9 +387,9 @@ export default function LogsPage() {
         </div>
 
         <div className="rounded-2xl bg-slate-800/50 p-4 shadow-sm ring-1 ring-slate-700">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-white">error log 内容</h2>
-            {errorLogName ? <span className="text-sm text-slate-400">{errorLogName}</span> : null}
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="shrink-0 text-lg font-semibold text-white">error log 内容</h2>
+            {errorLogName ? <span className="min-w-0 truncate text-sm text-slate-400" title={errorLogName}>{errorLogName}</span> : null}
           </div>
           {errorLogContentLoading ? (
             <Skeleton className="mt-3 h-32" />
