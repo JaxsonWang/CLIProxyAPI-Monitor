@@ -202,10 +202,19 @@ function useLerpYDomain(
   enabled = true
 ): [number, number] | undefined {
   const [currentDomain, setCurrentDomain] = useState(targetDomain);
+  const [prevTarget, setPrevTarget] = useState(targetDomain);
   const targetRef = useRef(targetDomain);
   const animationRef = useRef<number>();
   const startTimeRef = useRef<number | null>(null);
   const frameRef = useRef(0);
+
+  // Sync state during render if animation is disabled or target is missing
+  if (targetDomain !== prevTarget) {
+    setPrevTarget(targetDomain);
+    if (!targetDomain || !enabled) {
+      setCurrentDomain(targetDomain);
+    }
+  }
 
   useEffect(() => {
     targetRef.current = targetDomain;
@@ -216,9 +225,8 @@ function useLerpYDomain(
       cancelAnimationFrame(animationRef.current);
     }
 
-    // 无目标或禁用动画时直接同步
+    // Only proceed with animation if target exists and enabled
     if (!targetDomain || !enabled) {
-      setCurrentDomain(targetDomain);
       return;
     }
 

@@ -140,7 +140,7 @@ export default function Sidebar() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-slate-400">
             <Activity className="h-4 w-4" />
-            用量数据收集
+            上游使用统计
           </div>
           <button
             onClick={handleUsageToggle}
@@ -177,7 +177,7 @@ export default function Sidebar() {
       <Modal
         isOpen={showUsageConfirm}
         onClose={() => setShowUsageConfirm(false)}
-        title="关闭用量数据收集？"
+        title="关闭上游使用统计？"
         darkMode={true}
         className="bg-slate-900 ring-1 ring-slate-700"
         backdropClassName="bg-black/60"
