@@ -629,6 +629,38 @@ export default function DashboardPage() {
     return [...models].sort((a, b) => b.cost - a.cost);
   }, [overviewData]);
 
+  // 计算实际数据时长（从最早记录到现在）
+  const actualTimeSpan = useMemo(() => {
+    if (!overviewData?.byHour || overviewData.byHour.length === 0) {
+      return { days: appliedDays, minutes: appliedDays * 24 * 60 };
+    }
+    
+    // 找到最早的时间戳
+    let earliestTime: Date | null = null;
+    for (const point of overviewData.byHour) {
+      if (point.timestamp) {
+        const t = new Date(point.timestamp);
+        if (Number.isFinite(t.getTime())) {
+          if (!earliestTime || t < earliestTime) {
+            earliestTime = t;
+          }
+        }
+      }
+    }
+    
+    if (!earliestTime) {
+      return { days: appliedDays, minutes: appliedDays * 24 * 60 };
+    }
+    
+    // 计算从最早记录到现在的时长
+    const now = new Date();
+    const diffMs = now.getTime() - earliestTime.getTime();
+    const diffMinutes = Math.max(1, Math.floor(diffMs / (1000 * 60)));
+    const diffDays = Math.max(1, diffMinutes / (24 * 60));
+    
+    return { days: diffDays, minutes: diffMinutes };
+  }, [overviewData?.byHour, appliedDays]);
+
   const rangeSubtitle = useMemo(() => {
     if (rangeMode === "custom" && customStart && customEnd) {
       return `${customStart} ~ ${customEnd}（共 ${appliedDays} 天）`;
@@ -1103,7 +1135,7 @@ export default function DashboardPage() {
             <div className={`animate-card-float rounded-2xl p-5 shadow-sm ring-1 transition-all duration-200 ${darkMode ? "bg-gradient-to-br from-emerald-600/20 to-emerald-800/10 ring-emerald-500/30 hover:shadow-lg hover:shadow-emerald-500/20 hover:ring-emerald-500/50" : "bg-emerald-50 ring-emerald-200 hover:shadow-lg hover:ring-emerald-300"}`} style={{ animationDelay: '0.2s' }}>
               <div className="text-sm uppercase tracking-wide text-emerald-400">平均 TPM</div>
               <div className={`mt-3 text-2xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>
-                {(overviewData.totalTokens / (appliedDays * 24 * 60)).toFixed(2)}
+                {(overviewData.totalTokens / actualTimeSpan.minutes).toFixed(2)}
               </div>
               <p className={`mt-2 text-xs ${darkMode ? "text-emerald-300/70" : "text-emerald-600/70"}`}>每分钟Token</p>
             </div>
@@ -1112,7 +1144,7 @@ export default function DashboardPage() {
             <div className={`animate-card-float rounded-2xl p-5 shadow-sm ring-1 transition-all duration-200 ${darkMode ? "bg-gradient-to-br from-blue-600/20 to-blue-800/10 ring-blue-500/30 hover:shadow-lg hover:shadow-blue-500/20 hover:ring-blue-500/50" : "bg-blue-50 ring-blue-200 hover:shadow-lg hover:ring-blue-300"}`} style={{ animationDelay: '0.25s' }}>
               <div className="text-sm uppercase tracking-wide text-blue-400">平均 RPM</div>
               <div className={`mt-3 text-2xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>
-                {(overviewData.totalRequests / (appliedDays * 24 * 60)).toFixed(2)}
+                {(overviewData.totalRequests / actualTimeSpan.minutes).toFixed(2)}
               </div>
               <p className={`mt-2 text-xs ${darkMode ? "text-blue-300/70" : "text-blue-600/70"}`}>每分钟请求</p>
             </div>
@@ -1121,7 +1153,7 @@ export default function DashboardPage() {
             <div className={`animate-card-float rounded-2xl p-5 shadow-sm ring-1 transition-all duration-200 ${darkMode ? "bg-gradient-to-br from-purple-600/20 to-purple-800/10 ring-purple-500/30 hover:shadow-lg hover:shadow-purple-500/20 hover:ring-purple-500/50" : "bg-purple-50 ring-purple-200 hover:shadow-lg hover:ring-purple-300"}`} style={{ animationDelay: '0.3s' }}>
               <div className="text-sm uppercase tracking-wide text-purple-400">日均请求 (RPD)</div>
               <div className={`mt-3 text-2xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>
-                {formatCompactNumber(Math.round(overviewData.totalRequests / appliedDays))}
+                {formatCompactNumber(Math.round(overviewData.totalRequests / actualTimeSpan.days))}
               </div>
               <p className={`mt-2 text-xs ${darkMode ? "text-purple-300/70" : "text-purple-600/70"}`}>每日请求数</p>
             </div>
