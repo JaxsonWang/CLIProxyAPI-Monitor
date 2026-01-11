@@ -144,7 +144,7 @@ export default function DashboardPage() {
   const [customDraftEnd, setCustomDraftEnd] = useState(rangeInit.end);
   const [customError, setCustomError] = useState<string | null>(null);
   const customPickerRef = useRef<HTMLDivElement | null>(null);
-  const [hourRange, setHourRange] = useState<"all" | "12h" | "24h">("all");
+  const [hourRange, setHourRange] = useState<"all" | "24h" | "72h">("all");
   const [modelOptions, setModelOptions] = useState<string[]>([]);
   const [routeOptions, setRouteOptions] = useState<string[]>([]);
   const [filterModelInput, setFilterModelInput] = useState("");
@@ -639,7 +639,7 @@ export default function DashboardPage() {
   const hourlySeries = useMemo(() => {
     if (!overviewData?.byHour) return [] as UsageSeriesPoint[];
     if (hourRange === "all") return overviewData.byHour;
-    const hours = hourRange === "12h" ? 12 : 24;
+    const hours = hourRange === "24h" ? 24 : 72;
     return buildHourlySeries(overviewData.byHour, hours);
   }, [hourRange, overviewData?.byHour]);
 
@@ -649,10 +649,10 @@ export default function DashboardPage() {
     }
   }, [fullscreenChart]);
 
-  const hourRangeOptions: { key: "all" | "12h" | "24h"; label: string }[] = [
+  const hourRangeOptions: { key: "all" | "24h" | "72h"; label: string }[] = [
     { key: "all", label: "全部" },
-    { key: "12h", label: "最近 12 小时" },
-    { key: "24h", label: "最近 24 小时" }
+    { key: "24h", label: "最近 24 小时" },
+    { key: "72h", label: "最近 72 小时" }
   ];
 
   const priceModelOptions = useMemo(() => {
