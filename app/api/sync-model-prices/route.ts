@@ -140,7 +140,7 @@ export async function POST(request: Request) {
     for (const provider of Object.values(modelsDevData)) {
       if (!provider.models) continue;
       for (const model of Object.values(provider.models)) {
-        // 修复：允许 0 价模型（免费模型）
+        // 允许免费模型入库
         if (model.cost && (model.cost.input !== undefined || model.cost.output !== undefined)) {
           priceMap.set(model.id, {
             input: model.cost.input ?? 0,
@@ -175,6 +175,29 @@ export async function POST(request: Request) {
       let priceInfo = priceMap.get(modelId);
       let matchedKey = modelId;
 
+      // 去掉最后一个 - 后的内容，进行最长匹配
+      if (!priceInfo) {
+        const lastDashIndex = modelId.lastIndexOf("-");
+        if (lastDashIndex > 0) {
+          const baseNameWithoutSuffix = modelId.substring(0, lastDashIndex);
+          let bestMatch: { key: string; value: { input: number; output: number; cached: number }; matchLength: number } | null = null;
+          
+          for (const [key, value] of priceMap.entries()) {
+            if (key.startsWith(baseNameWithoutSuffix) || baseNameWithoutSuffix.startsWith(key)) {
+              const matchLength = Math.min(key.length, baseNameWithoutSuffix.length);
+              if (!bestMatch || matchLength > bestMatch.matchLength) {
+                bestMatch = { key, value, matchLength };
+              }
+            }
+          }
+          
+          if (bestMatch) {
+            priceInfo = bestMatch.value;
+            matchedKey = bestMatch.key;
+          }
+        }
+      }
+
       // 尝试去掉前缀匹配
       if (!priceInfo) {
         const simpleName = modelId.split("/").pop() || modelId;
@@ -185,12 +208,25 @@ export async function POST(request: Request) {
       // 模糊匹配
       if (!priceInfo) {
         const baseModelName = modelId.replace(/-\d{4,}.*$/, "").replace(/@.*$/, "");
+        let bestMatch: { key: string; value: { input: number; output: number; cached: number }; matchLength: number } | null = null;
+        
         for (const [key, value] of priceMap.entries()) {
-          if (key.includes(baseModelName) || baseModelName.includes(key)) {
-            priceInfo = value;
-            matchedKey = key;
-            break;
+          if (key.includes(baseModelName)) {
+            const matchLength = baseModelName.length;
+            if (!bestMatch || matchLength > bestMatch.matchLength) {
+              bestMatch = { key, value, matchLength };
+            }
+          } else if (baseModelName.includes(key)) {
+            const matchLength = key.length;
+            if (!bestMatch || matchLength > bestMatch.matchLength) {
+              bestMatch = { key, value, matchLength };
+            }
           }
+        }
+        
+        if (bestMatch) {
+          priceInfo = bestMatch.value;
+          matchedKey = bestMatch.key;
         }
       }
 
