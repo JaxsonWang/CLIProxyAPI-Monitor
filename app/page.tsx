@@ -1043,78 +1043,74 @@ export default function DashboardPage() {
             自定义
           </button>
           {customPickerOpen ? (
-            <div
-              className={`absolute z-30 mt-2 w-72 rounded-xl border p-4 shadow-2xl ${darkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}
-            >
-              <div className="space-y-3 text-sm">
-                <div className="grid grid-cols-1 gap-2">
-                  <label className={darkMode ? "text-slate-300" : "text-slate-700"}>
-                    开始日期
-                    <input
-                      type="date"
-                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none ${darkMode ? "border-slate-700 bg-slate-800 text-white" : "border-slate-300 bg-white text-slate-900"}`}
-                      value={customDraftStart}
-                      max={customDraftEnd || undefined}
-                      onChange={(e) => setCustomDraftStart(e.target.value)}
-                    />
-                  </label>
-                  <label className={darkMode ? "text-slate-300" : "text-slate-700"}>
-                    结束日期
-                    <input
-                      type="date"
-                      className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none ${darkMode ? "border-slate-700 bg-slate-800 text-white" : "border-slate-300 bg-white text-slate-900"}`}
-                      value={customDraftEnd}
-                      min={customDraftStart || undefined}
-                      onChange={(e) => setCustomDraftEnd(e.target.value)}
-                    />
-                  </label>
-                </div>
-                {customError ? (
-                  <p className="text-xs text-red-400">{customError}</p>
-                ) : null}
-                <div className="flex items-center justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCustomPickerOpen(false);
-                      setCustomError(null);
-                      setCustomDraftStart(customStart);
-                      setCustomDraftEnd(customEnd);
-                    }}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium ${darkMode ? "text-slate-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"}`}
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!customDraftStart || !customDraftEnd) {
-                        setCustomError("请选择开始和结束日期");
-                        return;
-                      }
-                      const startDate = new Date(customDraftStart);
-                      const endDate = new Date(customDraftEnd);
-                      if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime())) {
-                        setCustomError("日期无效");
-                        return;
-                      }
-                      if (endDate < startDate) {
-                        setCustomError("结束日期需不早于开始日期");
-                        return;
-                      }
-                      setCustomError(null);
-                      setCustomStart(customDraftStart);
-                      setCustomEnd(customDraftEnd);
-                      setRangeMode("custom");
-                      setPage(1);
-                      setCustomPickerOpen(false);
-                      setRefreshTrigger((prev) => prev + 1);
-                    }}
-                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
-                  >
-                    应用
-                  </button>
-                </div>
+            <div className={`absolute left-0 mt-2 w-72 rounded-xl border p-4 shadow-xl ${darkMode ? "border-slate-700 bg-slate-900" : "border-slate-200 bg-white"}`}>
+              <div className={`grid gap-3 text-xs ${darkMode ? "text-slate-300" : "text-slate-700"}`}>
+                <label className={darkMode ? "text-slate-300" : "text-slate-700"}>
+                  开始日期
+                  <input
+                    type="date"
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none ${darkMode ? "border-slate-700 bg-slate-800 text-white" : "border-slate-300 bg-white text-slate-900"}`}
+                    value={customDraftStart}
+                    max={customDraftEnd || undefined}
+                    onChange={(e) => setCustomDraftStart(e.target.value)}
+                  />
+                </label>
+                <label className={darkMode ? "text-slate-300" : "text-slate-700"}>
+                  结束日期
+                  <input
+                    type="date"
+                    className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none ${darkMode ? "border-slate-700 bg-slate-800 text-white" : "border-slate-300 bg-white text-slate-900"}`}
+                    value={customDraftEnd}
+                    min={customDraftStart || undefined}
+                    onChange={(e) => setCustomDraftEnd(e.target.value)}
+                  />
+                </label>
+              </div>
+              {customError ? (
+                <p className="mt-2 text-xs text-red-400">{customError}</p>
+              ) : null}
+              <div className="mt-3 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomPickerOpen(false);
+                    setCustomError(null);
+                    setCustomDraftStart(customStart);
+                    setCustomDraftEnd(customEnd);
+                  }}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium ${darkMode ? "text-slate-300 hover:bg-slate-800" : "text-slate-700 hover:bg-slate-100"}`}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!customDraftStart || !customDraftEnd) {
+                      setCustomError("请选择开始和结束日期");
+                      return;
+                    }
+                    const startDate = new Date(customDraftStart);
+                    const endDate = new Date(customDraftEnd);
+                    if (!Number.isFinite(startDate.getTime()) || !Number.isFinite(endDate.getTime())) {
+                      setCustomError("日期无效");
+                      return;
+                    }
+                    if (endDate < startDate) {
+                      setCustomError("结束日期需不早于开始日期");
+                      return;
+                    }
+                    setCustomError(null);
+                    setCustomStart(customDraftStart);
+                    setCustomEnd(customDraftEnd);
+                    setRangeMode("custom");
+                    setPage(1);
+                    setCustomPickerOpen(false);
+                    setRefreshTrigger((prev) => prev + 1);
+                  }}
+                  className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-500"
+                >
+                  应用
+                </button>
               </div>
             </div>
           ) : null}
@@ -1813,16 +1809,30 @@ export default function DashboardPage() {
               <h2 className={`text-lg font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>模型价格配置</h2>
               <p className={`text-xs ${darkMode ? "text-slate-400" : "text-slate-500"}`}>设置每百万 tokens 单价，费用计算将立即更新</p>
             </div>
-            <div className="flex items-center gap-3">
-              {status ? (
-                <p className={`text-xs ${status === "已保存" ? "text-emerald-400" : "text-red-400"}`}>
-                  {status}
-                </p>
-              ) : null}
+            <div className="flex w-full flex-col gap-4 md:w-3/5 md:flex-row md:items-center md:justify-end">
+              <div className="relative w-full md:max-w-[360px]">
+                <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
+                <input
+                  type="text"
+                  placeholder="搜索已配置的模型..."
+                  value={priceSearchQuery}
+                  onChange={(e) => setPriceSearchQuery(e.target.value)}
+                  className={`w-full rounded-lg border py-2 pl-10 pr-3 text-sm focus:border-indigo-500 focus:outline-none ${darkMode ? "border-slate-700 bg-slate-900 text-white placeholder-slate-500" : "border-slate-300 bg-white text-slate-900 placeholder-slate-400"}`}
+                />
+                {priceSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setPriceSearchQuery("")}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${darkMode ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
               <button
                 onClick={syncModelPrices}
                 disabled={syncingPrices}
-                className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition ${
+                className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition ${
                   syncingPrices
                     ? darkMode
                       ? "cursor-not-allowed border-slate-700 bg-slate-800 text-slate-500"
@@ -1896,38 +1906,35 @@ export default function DashboardPage() {
           </form>
 
           <div className="lg:col-span-3">
-            {/* 搜索框 */}
-            <div className="mb-3">
-              <div className="relative">
-                <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${darkMode ? "text-slate-500" : "text-slate-400"}`} />
-                <input
-                  type="text"
-                  placeholder="搜索已配置的模型..."
-                  value={priceSearchQuery}
-                  onChange={(e) => setPriceSearchQuery(e.target.value)}
-                  className={`w-full rounded-lg border py-2 pl-10 pr-3 text-sm focus:border-indigo-500 focus:outline-none ${darkMode ? "border-slate-700 bg-slate-900 text-white placeholder-slate-500" : "border-slate-300 bg-white text-slate-900 placeholder-slate-400"}`}
-                />
-                {priceSearchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setPriceSearchQuery("")}
-                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${darkMode ? "text-slate-500 hover:text-slate-300" : "text-slate-400 hover:text-slate-600"}`}
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="scrollbar-slim grid max-h-[360px] gap-3 overflow-y-auto pr-1">
-              {filteredPrices.length ? filteredPrices.map((price) => (
+            <div className="scrollbar-slim grid max-h-[420px] gap-3 overflow-y-auto pr-1">
+              {filteredPrices.length ? (() => {
+                // 计算全局每列的最大宽度
+                const maxInputLen = Math.max(...filteredPrices.map(p => String(p.inputPricePer1M).length));
+                const maxCachedLen = Math.max(...filteredPrices.map(p => String(p.cachedInputPricePer1M).length));
+                const maxOutputLen = Math.max(...filteredPrices.map(p => String(p.outputPricePer1M).length));
+                
+                const inputWidth = Math.max(90, 70 + maxInputLen * 8);
+                const cachedWidth = Math.max(90, 70 + maxCachedLen * 8);
+                const outputWidth = Math.max(90, 70 + maxOutputLen * 8);
+                
+                return filteredPrices.map((price) => (
                 <div key={price.model} className={`flex items-center justify-between rounded-xl border px-4 py-3 ${darkMode ? "border-slate-700 bg-slate-800/50" : "border-slate-200 bg-slate-50"}`}>
                   <div>
                     <p className={`text-base font-semibold ${darkMode ? "text-white" : "text-slate-900"}`}>{price.model}</p>
-                    <p className={`text-sm ${darkMode ? "text-slate-400" : "text-slate-600"}`}>
-                      ${price.inputPricePer1M}/M 输入
-                      {price.cachedInputPricePer1M > 0 && ` • $${price.cachedInputPricePer1M}/M 缓存`}
-                      {" • "}${price.outputPricePer1M}/M 输出
-                    </p>
+                    <div className="mt-1 grid grid-cols-3 gap-2 text-xs">
+                      <span className={`inline-flex items-center justify-between rounded-full px-2 py-0.5 ${darkMode ? "bg-rose-500/15 text-rose-200" : "bg-rose-100 text-rose-700"}`} style={{ width: `${inputWidth}px` }}>
+                        <span>输入</span>
+                        <span className="font-semibold tabular-nums">${price.inputPricePer1M}/M</span>
+                      </span>
+                      <span className={`inline-flex items-center justify-between rounded-full px-2 py-0.5 ${darkMode ? "bg-amber-500/15 text-amber-200" : "bg-amber-100 text-amber-700"}`} style={{ width: `${cachedWidth}px` }}>
+                        <span>缓存</span>
+                        <span className="font-semibold tabular-nums">${price.cachedInputPricePer1M}/M</span>
+                      </span>
+                      <span className={`inline-flex items-center justify-between rounded-full px-2 py-0.5 ${darkMode ? "bg-emerald-500/15 text-emerald-200" : "bg-emerald-100 text-emerald-700"}`} style={{ width: `${outputWidth}px` }}>
+                        <span>输出</span>
+                        <span className="font-semibold tabular-nums">${price.outputPricePer1M}/M</span>
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
@@ -1948,7 +1955,8 @@ export default function DashboardPage() {
                     </button>
                   </div>
                 </div>
-              )) : (
+              ));
+              })() : (
                 <div className={`flex flex-col items-center justify-center rounded-xl border border-dashed py-8 text-center ${darkMode ? "border-slate-700 bg-slate-800/30" : "border-slate-300 bg-slate-50"}`}>
                   <p className="text-base text-slate-400">
                     {priceSearchQuery ? "未找到匹配的模型" : "暂无已配置价格"}
