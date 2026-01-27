@@ -89,16 +89,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "服务端未配置 CLIPROXY_SECRET_KEY" }, { status: 500 });
     }
 
-    const envBaseUrl = process.env.CLIPROXY_API_BASE_URL || "";
-    if (!envBaseUrl) {
+    if (!config.cliproxy.baseUrl) {
       return NextResponse.json({ error: "服务端未配置 CLIPROXY_API_BASE_URL" }, { status: 500 });
     }
 
     if (!config.postgresUrl) {
       return NextResponse.json({ error: "服务端未配置 DATABASE_URL" }, { status: 500 });
     }
-
-    const baseUrl = envBaseUrl.replace(/\/v0\/management\/?$/, "").replace(/\/$/, "");
 
     // 1. 从 models.dev 获取价格数据
     const modelsDevHeaders: Record<string, string> = { "Accept": "application/json" };
@@ -152,7 +149,7 @@ export async function POST(request: Request) {
     }
 
     // 3. 从 CLIProxyAPI 获取当前模型列表
-    const modelsUrl = `${baseUrl}/v1/models`;
+    const modelsUrl = `${config.cliproxy.baseUrl}/models`;
     const cliproxyRes = await fetch(modelsUrl, {
       headers: { "Authorization": `Bearer ${apiKey}`, "Accept": "application/json" },
       cache: "no-store"

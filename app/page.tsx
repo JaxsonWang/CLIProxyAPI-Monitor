@@ -203,8 +203,8 @@ export default function DashboardPage() {
   const syncingRef = useRef(false);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [syncingPrices, setSyncingPrices] = useState(false);
-  const [pricesSyncStatus, setPricesSyncStatus] = useState<SyncStatus>({ type: 'idle' });
-  const pricesSyncStatusTimerRef = useRef<number | null>(null);
+  // const [pricesSyncStatus, setPricesSyncStatus] = useState<SyncStatus>({ type: 'idle' }); // 已禁用 toast 通知
+  // const pricesSyncStatusTimerRef = useRef<number | null>(null); // 已禁用 toast 通知
   const [pricesSyncModalOpen, setPricesSyncModalOpen] = useState(false);
   const [pricesSyncData, setPricesSyncData] = useState<{
     summary?: { total: number; updated: number; skipped: number; failed: number };
@@ -450,7 +450,8 @@ export default function DashboardPage() {
     };
   }, [saveStatus, closeSaveStatus]);
 
-  // 自动清除 pricesSyncStatus toast
+  // 自动清除 pricesSyncStatus toast - 已禁用
+  /*
   useEffect(() => {
     if (pricesSyncStatus.type === 'idle') return;
     
@@ -470,6 +471,7 @@ export default function DashboardPage() {
       }
     };
   }, [pricesSyncStatus]);
+  */
 
   const applyTheme = useCallback((nextDark: boolean) => {
     setDarkMode(nextDark);
@@ -576,7 +578,7 @@ export default function DashboardPage() {
     if (syncingPrices) return;
 
     setSyncingPrices(true);
-    setPricesSyncStatus({ type: 'syncing' });
+    // setPricesSyncStatus({ type: 'syncing' }); // 已禁用 toast 通知
     setPricesSyncData(null);
     setPricesSyncModalOpen(true);
 
@@ -591,26 +593,26 @@ export default function DashboardPage() {
       setPricesSyncData(data);
       
       if (!res.ok) {
-        setPricesSyncStatus({ 
-          type: 'error', 
-          message: `价格同步失败: ${data.error || res.statusText}` 
-        });
+        // setPricesSyncStatus({ 
+        //   type: 'error', 
+        //   message: `价格同步失败: ${data.error || res.statusText}` 
+        // }); // 已禁用 toast 通知
       } else {
         const { summary } = data;
-        setPricesSyncStatus({ 
-          type: 'success', 
-          message: `已更新 ${summary.updated} 个模型价格，跳过 ${summary.skipped} 个，失败 ${summary.failed} 个`,
-          summary: summary
-        });
+        // setPricesSyncStatus({ 
+        //   type: 'success', 
+        //   message: `已更新 ${summary.updated} 个模型价格，跳过 ${summary.skipped} 个，失败 ${summary.failed} 个`,
+        //   summary: summary
+        // }); // 已禁用 toast 通知
         // 同步成功后重新加载价格列表
         await loadPrices();
       }
     } catch (err) {
       const errorMsg = (err as Error).message;
-      setPricesSyncStatus({ 
-        type: 'error', 
-        message: `价格同步失败: ${errorMsg}` 
-      });
+      // setPricesSyncStatus({ 
+      //   type: 'error', 
+      //   message: `价格同步失败: ${errorMsg}` 
+      // }); // 已禁用 toast 通知
       setPricesSyncData({ error: errorMsg });
     } finally {
       setSyncingPrices(false);
@@ -2591,6 +2593,7 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* TODO: 价格同步 toast 通知已禁用，详情请查看弹窗
       {pricesSyncStatus.type !== 'idle' && (
         <div
           onClick={() => setPricesSyncStatus({ type: 'idle' })}
@@ -2617,6 +2620,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
+      */}
 
       {/* 模型价格同步详情弹窗 */}
       <Modal
@@ -2628,34 +2632,57 @@ export default function DashboardPage() {
       >
         <div className="max-h-[70vh] overflow-auto">
           {syncingPrices && (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
-              <span className="ml-3 text-slate-400">正在同步价格...</span>
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-500"></div>
+              <span className={`ml-4 text-base ${darkMode ? "text-slate-300" : "text-slate-600"}`}>正在同步价格...</span>
             </div>
           )}
           
           {pricesSyncData && !syncingPrices && (
-            <div className="space-y-4">
-              {/* 摘要 */}
-              {pricesSyncData.summary && (
-                <div className="flex flex-wrap gap-3 text-sm">
-                  <div className={`px-3 py-1 rounded ${darkMode ? "bg-slate-700" : "bg-slate-200"}`}>
-                    总计: <span className="font-semibold">{pricesSyncData.summary.total}</span>
-                  </div>
-                  <div className="px-3 py-1 rounded bg-emerald-500/20 text-emerald-400">
-                    已更新: <span className="font-semibold">{pricesSyncData.summary.updated}</span>
-                  </div>
-                  <div className="px-3 py-1 rounded bg-yellow-500/20 text-yellow-400">
-                    跳过: <span className="font-semibold">{pricesSyncData.summary.skipped}</span>
-                  </div>
-                  <div className="px-3 py-1 rounded bg-red-500/20 text-red-400">
-                    失败: <span className="font-semibold">{pricesSyncData.summary.failed}</span>
+            <>
+              {/* 错误信息优先显示 */}
+              {pricesSyncData.error && (
+                <div className={`rounded-xl p-6 border-2 ${darkMode ? "bg-red-950/30 border-red-500/40" : "bg-red-50 border-red-300"}`}>
+                  <div className="flex items-start gap-3">
+                    <div className={`flex-shrink-0 p-2 rounded-lg ${darkMode ? "bg-red-900/40" : "bg-red-200"}`}>
+                      <AlertTriangle className={`h-6 w-6 ${darkMode ? "text-red-400" : "text-red-600"}`} />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className={`text-lg font-semibold mb-2 ${darkMode ? "text-red-300" : "text-red-900"}`}>
+                        同步失败
+                      </h3>
+                      <p className={`text-sm leading-relaxed ${darkMode ? "text-red-200/90" : "text-red-800"}`}>
+                        {pricesSyncData.error}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* 详细结果 */}
-              {pricesSyncData.details && pricesSyncData.details.length > 0 && (
+              {/* 摘要 */}
+              {pricesSyncData.summary && !pricesSyncData.error && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    <div className={`rounded-xl border p-4 ${darkMode ? "bg-slate-800/50 border-slate-700" : "bg-slate-50 border-slate-200"}`}>
+                      <p className={`text-xs mb-1 ${darkMode ? "text-slate-400" : "text-slate-500"}`}>总计</p>
+                      <p className={`text-2xl font-bold ${darkMode ? "text-white" : "text-slate-900"}`}>{pricesSyncData.summary.total}</p>
+                    </div>
+                    <div className="rounded-xl border p-4 bg-emerald-500/10 border-emerald-500/30">
+                      <p className="text-xs mb-1 text-emerald-400">已更新</p>
+                      <p className="text-2xl font-bold text-emerald-400">{pricesSyncData.summary.updated}</p>
+                    </div>
+                    <div className="rounded-xl border p-4 bg-yellow-500/10 border-yellow-500/30">
+                      <p className="text-xs mb-1 text-yellow-400">跳过</p>
+                      <p className="text-2xl font-bold text-yellow-400">{pricesSyncData.summary.skipped}</p>
+                    </div>
+                    <div className="rounded-xl border p-4 bg-red-500/10 border-red-500/30">
+                      <p className="text-xs mb-1 text-red-400">失败</p>
+                      <p className="text-2xl font-bold text-red-400">{pricesSyncData.summary.failed}</p>
+                    </div>
+                  </div>
+
+                  {/* 详细结果 */}
+                  {pricesSyncData.details && pricesSyncData.details.length > 0 && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
@@ -2689,14 +2716,9 @@ export default function DashboardPage() {
                   </table>
                 </div>
               )}
-
-              {/* 错误信息 */}
-              {pricesSyncData.error && (
-                <div className="rounded-lg p-4 bg-red-500/10 border border-red-500/30">
-                  <p className="text-sm text-red-300">{pricesSyncData.error}</p>
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
       </Modal>
